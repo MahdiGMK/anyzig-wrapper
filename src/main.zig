@@ -7,9 +7,19 @@ pub fn main() !void {
 
     const def_zig_ver: ?[]u8 = std.process.getEnvVarOwned(alloc, "ZIG_VERSION") catch null;
 
-    const zon_exist = blk: {
-        _ = std.fs.cwd().access("./build.zig.zon", .{}) catch break :blk false;
-        break :blk true;
+    const zon_exist = zon_chk: {
+        var dir = std.fs.cwd();
+        for (0..6) |_| {
+            _ = dir.access("./build.zig.zon", .{}) catch {
+                var cur_dir = dir;
+                dir = try cur_dir.openDir("..", .{});
+                // cur_dir.close();
+                continue;
+            };
+            break :zon_chk true;
+        }
+        dir.close();
+        break :zon_chk false;
     };
 
     _ = args_iter.next();
